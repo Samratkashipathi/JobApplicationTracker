@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Application Tracker - Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-briefcase"></i>
+                <span>Job Tracker</span>
+            </div>
+            <div class="nav-actions">
+                <button class="btn btn-primary" onclick="openModal('seasonModal')">
+                    <i class="fas fa-plus"></i> New Season
+                </button>
+                <button class="btn btn-success" onclick="openModal('jobModal')">
+                    <i class="fas fa-plus"></i> Add Job
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <h3><i class="fas fa-calendar-alt"></i> Current Season</h3>
+                <div id="currentSeason" class="season-info">
+                    <div class="loading">Loading...</div>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3><i class="fas fa-filter"></i> Filters</h3>
+                <div class="filter-group">
+                    <label for="statusFilter">Status:</label>
+                    <select id="statusFilter" class="form-select" onchange="applyFilters()">
+                        <option value="">All Statuses</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="searchInput">Search:</label>
+                    <input type="text" id="searchInput" class="form-input" placeholder="Company or role..." onkeyup="applySearch()" />
+                </div>
+                <button class="btn btn-outline" onclick="clearFilters()">Clear Filters</button>
+            </div>
+
+            <div class="sidebar-section">
+                <h3><i class="fas fa-history"></i> All Seasons</h3>
+                <div id="allSeasons" class="seasons-list">
+                    <div class="loading">Loading...</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="content">
+            <!-- Dashboard Header -->
+            <div class="dashboard-header">
+                <h1><i class="fas fa-chart-line"></i> Dashboard</h1>
+                <div class="header-actions">
+                    <button class="btn btn-outline" onclick="refreshData()">
+                        <i class="fas fa-refresh"></i> Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="stats-grid" id="statsGrid">
+                <div class="loading-card">Loading statistics...</div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="charts-section">
+                <div class="chart-container">
+                    <h3><i class="fas fa-pie-chart"></i> Application Status Distribution</h3>
+                    <canvas id="statusChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3><i class="fas fa-chart-bar"></i> Applications Over Time</h3>
+                    <canvas id="timelineChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Jobs Table -->
+            <div class="table-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-briefcase"></i> Job Applications</h2>
+                    <div class="table-actions">
+                        <button class="btn btn-success" onclick="openModal('jobModal')">
+                            <i class="fas fa-plus"></i> Add Job
+                        </button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table id="jobsTable" class="jobs-table">
+                        <thead>
+                            <tr>
+                                <th>Company</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Applied Date</th>
+                                <th>Days Since</th>
+                                <th>Source</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="jobsTableBody">
+                            <tr>
+                                <td colspan="7" class="loading">Loading jobs...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    
+    <!-- Season Modal -->
+    <div id="seasonModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-calendar-plus"></i> Create New Season</h2>
+                <button class="modal-close" onclick="closeModal('seasonModal')">&times;</button>
+            </div>
+            <form id="seasonForm" onsubmit="createSeason(event)">
+                <div class="form-group">
+                    <label for="seasonName">Season Name:</label>
+                    <input type="text" id="seasonName" class="form-input" placeholder="e.g., Fall 2024, Career Change 2024" required>
+                    <small>Give your job hunting season a memorable name</small>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('seasonModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Season</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Job Modal -->
+    <div id="jobModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="jobModalTitle"><i class="fas fa-plus"></i> Add New Job</h2>
+                <button class="modal-close" onclick="closeModal('jobModal')">&times;</button>
+            </div>
+            <form id="jobForm" onsubmit="saveJob(event)">
+                <input type="hidden" id="jobId" value="">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="jobRole">Role/Position: <span class="required">*</span></label>
+                        <input type="text" id="jobRole" class="form-input" placeholder="Software Engineer" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="companyName">Company Name: <span class="required">*</span></label>
+                        <input type="text" id="companyName" class="form-input" placeholder="Google" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="jobStatus">Status:</label>
+                        <select id="jobStatus" class="form-select">
+                            <option value="Applied">Applied</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="appliedDate">Applied Date:</label>
+                        <input type="date" id="appliedDate" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="jobSource">Source:</label>
+                        <input type="text" id="jobSource" class="form-input" placeholder="LinkedIn, Company Website, Referral">
+                    </div>
+                    <div class="form-group">
+                        <label for="companyWebsite">Company Website:</label>
+                        <input type="url" id="companyWebsite" class="form-input" placeholder="https://company.com">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="jobDescription">Job Description:</label>
+                    <textarea id="jobDescription" class="form-textarea" rows="3" placeholder="Brief description of the role..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="resumeSent">Resume Link:</label>
+                    <input type="url" id="resumeSent" class="form-input" placeholder="Google Drive link to resume">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('jobModal')">Cancel</button>
+                    <button type="submit" class="btn btn-success">Save Job</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Job Details Modal -->
+    <div id="jobDetailsModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2><i class="fas fa-info-circle"></i> Job Details</h2>
+                <button class="modal-close" onclick="closeModal('jobDetailsModal')">&times;</button>
+            </div>
+            <div id="jobDetailsContent">
+                <!-- Job details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Update Modal -->
+    <div id="statusModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-edit"></i> Update Status</h2>
+                <button class="modal-close" onclick="closeModal('statusModal')">&times;</button>
+            </div>
+            <form id="statusForm" onsubmit="updateJobStatus(event)">
+                <input type="hidden" id="statusJobId" value="">
+                <div class="form-group">
+                    <label for="newStatus">New Status:</label>
+                    <select id="newStatus" class="form-select" required>
+                        <!-- Status options will be loaded here -->
+                    </select>
+                </div>
+                <div id="currentJobInfo" class="job-info-card">
+                    <!-- Current job info will be displayed here -->
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('statusModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

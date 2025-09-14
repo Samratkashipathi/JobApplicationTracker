@@ -1,8 +1,19 @@
 # Job Application Tracker
 
-A command-line tool to track job applications across different job hunting seasons using SQLite database.
+A beautiful web application and command-line tool to track job applications across different job hunting seasons using SQLite database.
 
 ## Features
+
+### 🌟 Beautiful Web Interface
+
+- **Modern Dashboard**: Clean, responsive design with real-time statistics
+- **Interactive Charts**: Visual representation of application status and timeline
+- **Easy Job Management**: Add, edit, and update job applications with intuitive forms
+- **Advanced Search & Filtering**: Find jobs by company, role, status, or source
+- **Season Management**: Create, switch between, and manage different job hunting periods
+- **Mobile Responsive**: Works perfectly on desktop, tablet, and mobile devices
+
+### 💻 Command Line Interface
 
 - **Season Management**: Create and manage different job hunting periods
 - **Job Tracking**: Add, update, and track job applications
@@ -22,8 +33,21 @@ pip install -r requirements.txt
 
 ### Run the Application
 
+#### 🌟 Web Interface (Recommended)
+
 ```bash
-# Recommended method
+# Start the web server
+python app.py
+# or
+python web.py
+
+# Open your browser to: http://localhost:5000
+```
+
+#### 💻 Command Line Interface
+
+```bash
+# CLI version
 python main.py
 
 # Alternative methods
@@ -60,6 +84,8 @@ job_tracker/
 - Python 3.7+
 - tabulate
 - colorama
+- Flask (for web interface)
+- Flask-CORS (for web interface)
 
 ## Database
 
