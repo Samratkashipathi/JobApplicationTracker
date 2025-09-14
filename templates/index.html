@@ -13,24 +13,26 @@
 
 <body>
     <!-- Navigation -->
-    <nav class="navbar">
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
         <div class="nav-container">
             <div class="nav-brand">
-                <i class="fas fa-briefcase"></i>
-                <span>Job Tracker</span>
+                <i class="fas fa-briefcase" aria-hidden="true"></i>
+                <span>JobTracker</span>
             </div>
             <div class="nav-actions">
-                <div class="user-info" id="userInfo">
+                <div class="user-info" id="userInfo" role="banner" aria-label="User information">
                     <!-- User info will be loaded here -->
                 </div>
-                <button class="btn btn-primary" onclick="openModal('seasonModal')">
-                    <i class="fas fa-plus"></i> New Season
+                <button class="btn btn-primary" onclick="openModal('seasonModal')" aria-label="Create new season">
+                    <i class="fas fa-calendar-plus" aria-hidden="true"></i>
+                    <span>New Season</span>
                 </button>
-                <button class="btn btn-success" onclick="openModal('jobModal')">
-                    <i class="fas fa-plus"></i> Add Job
+                <button class="btn btn-success" onclick="openModal('jobModal')" aria-label="Add new job application">
+                    <i class="fas fa-plus-circle" aria-hidden="true"></i>
+                    <span>Add Job</span>
                 </button>
-                <button class="btn btn-outline" onclick="logout()" title="Logout">
-                    <i class="fas fa-sign-out-alt"></i>
+                <button class="btn btn-outline" onclick="logout()" title="Logout" aria-label="Logout">
+                    <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
                 </button>
             </div>
         </div>
@@ -39,98 +41,138 @@
     <!-- Main Content -->
     <div class="main-container">
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" role="complementary" aria-label="Filters and navigation">
             <div class="sidebar-section">
-                <h3><i class="fas fa-calendar-alt"></i> Current Season</h3>
-                <div id="currentSeason" class="season-info">
-                    <div class="loading">Loading...</div>
+                <h3>
+                    <i class="fas fa-calendar-check" aria-hidden="true"></i>
+                    Current Season
+                </h3>
+                <div id="currentSeason" class="season-info" role="region" aria-label="Current season information">
+                    <div class="loading" role="status" aria-label="Loading season information">
+                        <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+                        Loading...
+                    </div>
                 </div>
             </div>
 
             <div class="sidebar-section">
-                <h3><i class="fas fa-filter"></i> Filters</h3>
+                <h3>
+                    <i class="fas fa-search" aria-hidden="true"></i>
+                    Filters & Search
+                </h3>
                 <div class="filter-group">
-                    <label for="statusFilter">Status:</label>
-                    <select id="statusFilter" class="form-select" onchange="applyFilters()">
+                    <label for="statusFilter">Filter by Status</label>
+                    <select id="statusFilter" class="form-select" onchange="applyFilters()"
+                        aria-label="Filter jobs by status">
                         <option value="">All Statuses</option>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label for="searchInput">Search:</label>
-                    <input type="text" id="searchInput" class="form-input" placeholder="Company or role..."
-                        onkeyup="applySearch()" />
+                    <label for="searchInput">Search Jobs</label>
+                    <input type="text" id="searchInput" class="form-input" placeholder="Search by company or role..."
+                        onkeyup="applySearch()" aria-label="Search job applications" />
                 </div>
-                <button class="btn btn-outline" onclick="clearFilters()">Clear Filters</button>
+                <button class="btn btn-outline" onclick="clearFilters()" aria-label="Clear all filters">
+                    <i class="fas fa-times-circle" aria-hidden="true"></i>
+                    Clear Filters
+                </button>
             </div>
 
             <div class="sidebar-section">
-                <h3><i class="fas fa-history"></i> All Seasons</h3>
-                <div id="allSeasons" class="seasons-list">
-                    <div class="loading">Loading...</div>
+                <h3>
+                    <i class="fas fa-history" aria-hidden="true"></i>
+                    Season History
+                </h3>
+                <div id="allSeasons" class="seasons-list" role="list" aria-label="All seasons">
+                    <div class="loading" role="status" aria-label="Loading seasons">
+                        <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+                        Loading...
+                    </div>
                 </div>
             </div>
         </aside>
 
         <!-- Main Content Area -->
-        <main class="content">
+        <main class="content" role="main" aria-label="Main dashboard content">
             <!-- Dashboard Header -->
-            <div class="dashboard-header">
-                <h1><i class="fas fa-chart-line"></i> Dashboard</h1>
+            <header class="dashboard-header">
+                <h1>
+                    <i class="fas fa-chart-line" aria-hidden="true"></i>
+                    Analytics Dashboard
+                </h1>
                 <div class="header-actions">
-                    <button class="btn btn-outline" onclick="refreshData()">
-                        <i class="fas fa-refresh"></i> Refresh
+                    <button class="btn btn-outline" onclick="refreshData()" aria-label="Refresh data">
+                        <i class="fas fa-sync-alt" aria-hidden="true"></i>
+                        Refresh
                     </button>
                 </div>
-            </div>
+            </header>
 
             <!-- Statistics Cards -->
-            <div class="stats-grid" id="statsGrid">
-                <div class="loading-card">Loading statistics...</div>
-            </div>
+            <section class="stats-grid" id="statsGrid" role="region" aria-label="Application statistics">
+                <div class="loading-card" role="status" aria-label="Loading statistics">
+                    <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+                    Loading statistics...
+                </div>
+            </section>
 
             <!-- Charts Section -->
-            <div class="charts-section">
+            <section class="charts-section" role="region" aria-label="Data visualization">
                 <div class="chart-container">
-                    <h3><i class="fas fa-pie-chart"></i> Application Status Distribution</h3>
-                    <canvas id="statusChart"></canvas>
+                    <h3>
+                        <i class="fas fa-chart-pie" aria-hidden="true"></i>
+                        Status Distribution
+                    </h3>
+                    <canvas id="statusChart" role="img" aria-label="Job application status distribution chart"></canvas>
                 </div>
                 <div class="chart-container">
-                    <h3><i class="fas fa-chart-bar"></i> Applications Over Time</h3>
-                    <canvas id="timelineChart"></canvas>
+                    <h3>
+                        <i class="fas fa-chart-area" aria-hidden="true"></i>
+                        Application Timeline
+                    </h3>
+                    <canvas id="timelineChart" role="img" aria-label="Job applications over time chart"></canvas>
                 </div>
-            </div>
+            </section>
 
             <!-- Jobs Table -->
-            <div class="table-section">
+            <section class="table-section" role="region" aria-label="Job applications table">
                 <div class="section-header">
-                    <h2><i class="fas fa-briefcase"></i> Job Applications</h2>
+                    <h2>
+                        <i class="fas fa-briefcase" aria-hidden="true"></i>
+                        Job Applications
+                    </h2>
                     <div class="table-actions">
-                        <button class="btn btn-success" onclick="openModal('jobModal')">
-                            <i class="fas fa-plus"></i> Add Job
+                        <button class="btn btn-success" onclick="openModal('jobModal')"
+                            aria-label="Add new job application">
+                            <i class="fas fa-plus-circle" aria-hidden="true"></i>
+                            Add Application
                         </button>
                     </div>
                 </div>
                 <div class="table-container">
-                    <table id="jobsTable" class="jobs-table">
+                    <table id="jobsTable" class="jobs-table" role="table" aria-label="Job applications data">
                         <thead>
-                            <tr>
-                                <th>Company</th>
-                                <th>Role</th>
-                                <th>Status</th>
-                                <th>Applied Date</th>
-                                <th>Days Since</th>
-                                <th>Source</th>
-                                <th>Actions</th>
+                            <tr role="row">
+                                <th scope="col">Company</th>
+                                <th scope="col">Position</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Applied</th>
+                                <th scope="col">Days Ago</th>
+                                <th scope="col">Source</th>
+                                <th scope="col">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="jobsTableBody">
                             <tr>
-                                <td colspan="7" class="loading">Loading jobs...</td>
+                                <td colspan="7" class="loading" role="status" aria-label="Loading job applications">
+                                    <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+                                    Loading applications...
+                                </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </section>
         </main>
     </div>
 

@@ -259,26 +259,26 @@ class JobTrackerApp {
 			{
 				title: "Total Applications",
 				value: stats.total || 0,
-				icon: "fas fa-briefcase",
+				icon: "fas fa-paper-plane",
 				iconClass: "icon-blue",
 				change: null,
 			},
 			{
-				title: "Active Applications",
+				title: "In Progress",
 				value: stats.active || 0,
-				icon: "fas fa-clock",
+				icon: "fas fa-hourglass-half",
 				iconClass: "icon-yellow",
 				change: null,
 			},
 			{
-				title: "Interviews",
+				title: "Interviews Scheduled",
 				value: stats.interviews || 0,
-				icon: "fas fa-users",
-				iconClass: "icon-green",
+				icon: "fas fa-handshake",
+				iconClass: "icon-purple",
 				change: null,
 			},
 			{
-				title: "Offers",
+				title: "Offers Received",
 				value: stats.offers || 0,
 				icon: "fas fa-trophy",
 				iconClass: "icon-green",
@@ -292,8 +292,8 @@ class JobTrackerApp {
 								((stats.offers || 0) / stats.total) * 100
 						  )}%`
 						: "0%",
-				icon: "fas fa-chart-line",
-				iconClass: "icon-cyan",
+				icon: "fas fa-chart-line-up",
+				iconClass: "icon-blue",
 				change: null,
 			},
 		];
