@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  job-tracker:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data
+      - ./flask_session:/app/flask_session
+    environment:
+      - SECRET_KEY=${SECRET_KEY:-your-super-secret-key-change-in-production}
+      - FLASK_ENV=production
+      - DATABASE_PATH=/app/data/job_tracker.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/auth/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  data:
+  flask_session:

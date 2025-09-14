@@ -5,3 +5,5 @@ Flask-CORS==4.0.0
 Flask-Session==0.5.0
 Werkzeug==3.0.1
 bcrypt==4.1.2
+gunicorn==21.2.0
+python-dotenv==1.0.0

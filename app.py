@@ -10,6 +10,10 @@ from datetime import datetime, timedelta
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from flask_cors import CORS
 from flask_session import Session
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 from migrate_db import migrate_database
 
@@ -30,6 +34,12 @@ app.config["SECRET_KEY"] = os.getenv(
 app.config["SESSION_TYPE"] = "filesystem"
 app.config["SESSION_PERMANENT"] = False
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=31)
+
+# Production security settings
+if os.getenv("FLASK_ENV") == "production":
+    app.config["SESSION_COOKIE_SECURE"] = True  # HTTPS only
+    app.config["SESSION_COOKIE_HTTPONLY"] = True  # No JS access
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"  # CSRF protection
 
 # Initialize session
 Session(app)
@@ -474,7 +484,7 @@ if __name__ == "__main__":
     os.makedirs(static_dir, exist_ok=True)
     os.makedirs(os.path.join(static_dir, "css"), exist_ok=True)
     os.makedirs(os.path.join(static_dir, "js"), exist_ok=True)
-    
+
     migrate_database()
 
     print("🚀 Starting Job Application Tracker Web Server...")
@@ -484,12 +494,17 @@ if __name__ == "__main__":
         print("❌ Database setup incomplete. Exiting...")
         exit(1)
 
-    print("📊 Dashboard available at: http://localhost:5050")
-    print("🔧 API documentation at: http://localhost:5050/api")
+    # Get configuration from environment
+    port = int(os.getenv("PORT", 5050))
+    host = os.getenv("HOST", "0.0.0.0")
+    debug = os.getenv("FLASK_ENV") != "production"
+
+    print(f"📊 Dashboard available at: http://localhost:{port}")
+    print("🔧 API documentation at: http://localhost:{port}/api")
     print("💡 Press Ctrl+C to stop the server")
 
     try:
-        app.run(debug=True, host="0.0.0.0", port=5050)
+        app.run(debug=debug, host=host, port=port)
     except KeyboardInterrupt:
         print("\n👋 Server stopped by user")
     except Exception as e:
