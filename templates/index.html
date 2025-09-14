@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
     <!-- Navigation -->
     <nav class="navbar">
@@ -18,11 +20,17 @@
                 <span>Job Tracker</span>
             </div>
             <div class="nav-actions">
+                <div class="user-info" id="userInfo">
+                    <!-- User info will be loaded here -->
+                </div>
                 <button class="btn btn-primary" onclick="openModal('seasonModal')">
                     <i class="fas fa-plus"></i> New Season
                 </button>
                 <button class="btn btn-success" onclick="openModal('jobModal')">
                     <i class="fas fa-plus"></i> Add Job
+                </button>
+                <button class="btn btn-outline" onclick="logout()" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
                 </button>
             </div>
         </div>
@@ -38,7 +46,7 @@
                     <div class="loading">Loading...</div>
                 </div>
             </div>
-            
+
             <div class="sidebar-section">
                 <h3><i class="fas fa-filter"></i> Filters</h3>
                 <div class="filter-group">
@@ -49,7 +57,8 @@
                 </div>
                 <div class="filter-group">
                     <label for="searchInput">Search:</label>
-                    <input type="text" id="searchInput" class="form-input" placeholder="Company or role..." onkeyup="applySearch()" />
+                    <input type="text" id="searchInput" class="form-input" placeholder="Company or role..."
+                        onkeyup="applySearch()" />
                 </div>
                 <button class="btn btn-outline" onclick="clearFilters()">Clear Filters</button>
             </div>
@@ -126,7 +135,7 @@
     </div>
 
     <!-- Modals -->
-    
+
     <!-- Season Modal -->
     <div id="seasonModal" class="modal">
         <div class="modal-content">
@@ -137,7 +146,8 @@
             <form id="seasonForm" onsubmit="createSeason(event)">
                 <div class="form-group">
                     <label for="seasonName">Season Name:</label>
-                    <input type="text" id="seasonName" class="form-input" placeholder="e.g., Fall 2024, Career Change 2024" required>
+                    <input type="text" id="seasonName" class="form-input"
+                        placeholder="e.g., Fall 2024, Career Change 2024" required>
                     <small>Give your job hunting season a memorable name</small>
                 </div>
                 <div class="form-actions">
@@ -178,7 +188,8 @@
                     </div>
                     <div class="form-group">
                         <label for="jobSource">Source:</label>
-                        <input type="text" id="jobSource" class="form-input" placeholder="LinkedIn, Company Website, Referral">
+                        <input type="text" id="jobSource" class="form-input"
+                            placeholder="LinkedIn, Company Website, Referral">
                     </div>
                     <div class="form-group">
                         <label for="companyWebsite">Company Website:</label>
@@ -187,7 +198,8 @@
                 </div>
                 <div class="form-group">
                     <label for="jobDescription">Job Description:</label>
-                    <textarea id="jobDescription" class="form-textarea" rows="3" placeholder="Brief description of the role..."></textarea>
+                    <textarea id="jobDescription" class="form-textarea" rows="3"
+                        placeholder="Brief description of the role..."></textarea>
                 </div>
                 <div class="form-group">
                     <label for="resumeSent">Resume Link:</label>
@@ -245,4 +257,5 @@
 
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
+
 </html>

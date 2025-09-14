@@ -6,34 +6,190 @@ A beautiful web interface for tracking job applications across different seasons
 
 import sys
 import os
-from datetime import datetime
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from datetime import datetime, timedelta
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from flask_cors import CORS
+from flask_session import Session
+
+from migrate_db import migrate_database
 
 # Add the current directory to Python path to allow imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from job_tracker.services import JobTrackerService
 from job_tracker.models import JobStatus
+from auth_utils import auth_manager
 
 app = Flask(__name__)
 CORS(app)
 
+# Configure Flask session
+app.config["SECRET_KEY"] = os.getenv(
+    "SECRET_KEY", "your-secret-key-change-in-production"
+)
+app.config["SESSION_TYPE"] = "filesystem"
+app.config["SESSION_PERMANENT"] = False
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=31)
+
+# Initialize session
+Session(app)
+
 # Initialize the job tracker service
-job_service = JobTrackerService()
+try:
+    job_service = JobTrackerService()
+    print("✅ Job tracker service initialized successfully")
+except Exception as e:
+    print(f"❌ Failed to initialize job tracker service: {e}")
+    job_service = None
 
 
 @app.route("/")
 def index():
     """Main dashboard page"""
-    return render_template("index.html")
+    try:
+        is_logged_in = auth_manager.is_logged_in()
+        print(f"🔍 Index route: User logged in = {is_logged_in}")
+
+        if not is_logged_in:
+            print("🔄 Redirecting to login page")
+            return redirect(url_for("login_page"))
+
+        print("✅ Serving dashboard")
+        return render_template("index.html")
+    except Exception as e:
+        print(f"❌ Error in index route: {e}")
+        return redirect(url_for("login_page"))
+
+
+@app.route("/login")
+def login_page():
+    """Login/Registration page"""
+    try:
+        is_logged_in = auth_manager.is_logged_in()
+        print(f"🔍 Login route: User logged in = {is_logged_in}")
+
+        if is_logged_in:
+            print("🔄 User already logged in, redirecting to dashboard")
+            return redirect(url_for("index"))
+
+        print("✅ Serving login page")
+        return render_template("auth.html")
+    except Exception as e:
+        print(f"❌ Error in login route: {e}")
+        # Return a simple login page if there's an error
+        return render_template("auth.html")
+
+
+@app.route("/logout")
+def logout():
+    """Logout user"""
+    auth_manager.logout_user()
+    return redirect(url_for("login_page"))
+
+
+# Authentication API Routes
+@app.route("/api/auth/register", methods=["POST"])
+def register():
+    """Register new user"""
+    try:
+        data = request.get_json()
+        username = data.get("username", "").strip()
+        email = data.get("email", "").strip()
+        password = data.get("password", "")
+        full_name = data.get("full_name", "").strip()
+
+        success, message, user = auth_manager.register_user(
+            username, email, password, full_name
+        )
+
+        if success:
+            return jsonify({"success": True, "message": message})
+        else:
+            return jsonify({"success": False, "error": message}), 400
+
+    except Exception as e:
+        return (
+            jsonify({"success": False, "error": f"Registration failed: {str(e)}"}),
+            500,
+        )
+
+
+@app.route("/api/auth/login", methods=["POST"])
+def login():
+    """Login user"""
+    try:
+        data = request.get_json()
+        username = data.get("username", "").strip()
+        password = data.get("password", "")
+
+        success, message, user = auth_manager.login_user(username, password)
+
+        if success:
+            return jsonify(
+                {
+                    "success": True,
+                    "message": message,
+                    "user": user.to_dict() if user else None,
+                }
+            )
+        else:
+            return jsonify({"success": False, "error": message}), 401
+
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Login failed: {str(e)}"}), 500
+
+
+@app.route("/api/auth/user", methods=["GET"])
+@auth_manager.require_login
+def get_current_user():
+    """Get current user information"""
+    user = auth_manager.get_current_user()
+    if user:
+        return jsonify({"success": True, "data": user.to_dict()})
+    else:
+        return jsonify({"success": False, "error": "User not found"}), 404
+
+
+@app.route("/api/auth/status", methods=["GET"])
+def auth_status():
+    """Get authentication status"""
+    try:
+        is_logged_in = auth_manager.is_logged_in()
+        user = auth_manager.get_current_user() if is_logged_in else None
+
+        print(
+            f"🔍 Auth status API: logged_in = {is_logged_in}, user = {user.username if user else None}"
+        )
+
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "logged_in": is_logged_in,
+                    "user": user.to_dict() if user else None,
+                },
+            }
+        )
+    except Exception as e:
+        print(f"❌ Error in auth status API: {e}")
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "logged_in": False,
+                    "user": None,
+                },
+            }
+        )
 
 
 @app.route("/api/seasons", methods=["GET"])
+@auth_manager.require_login
 def get_seasons():
     """Get all seasons"""
     try:
-        seasons = job_service.get_all_seasons()
+        user_id = auth_manager.get_current_user_id()
+        seasons = job_service.get_all_seasons(user_id)
         return jsonify(
             {"success": True, "data": [season.to_dict() for season in seasons]}
         )
@@ -42,12 +198,14 @@ def get_seasons():
 
 
 @app.route("/api/seasons/active", methods=["GET"])
+@auth_manager.require_login
 def get_active_season():
     """Get the active season"""
     try:
-        season = job_service.get_active_season()
+        user_id = auth_manager.get_current_user_id()
+        season = job_service.get_active_season(user_id)
         if season:
-            stats = job_service.get_job_statistics()
+            stats = job_service.get_job_statistics(user_id)
             return jsonify(
                 {"success": True, "data": {"season": season.to_dict(), "stats": stats}}
             )
@@ -58,16 +216,18 @@ def get_active_season():
 
 
 @app.route("/api/seasons", methods=["POST"])
+@auth_manager.require_login
 def create_season():
     """Create a new season"""
     try:
         data = request.get_json()
         name = data.get("name", "").strip()
+        user_id = auth_manager.get_current_user_id()
 
         if not name:
             return jsonify({"success": False, "error": "Season name is required"}), 400
 
-        success, message, season_id = job_service.create_season(name)
+        success, message, season_id = job_service.create_season(name, user_id)
 
         if success:
             return jsonify(
@@ -80,6 +240,7 @@ def create_season():
 
 
 @app.route("/api/seasons/end", methods=["POST"])
+@auth_manager.require_login
 def end_current_season():
     """End the current active season"""
     try:
@@ -94,11 +255,13 @@ def end_current_season():
 
 
 @app.route("/api/jobs", methods=["GET"])
+@auth_manager.require_login
 def get_jobs():
     """Get all jobs for the active season"""
     try:
+        user_id = auth_manager.get_current_user_id()
         season_id = request.args.get("season_id", type=int)
-        jobs = job_service.get_jobs_by_season(season_id)
+        jobs = job_service.get_jobs_by_season(season_id, user_id)
 
         return jsonify({"success": True, "data": [job.to_dict() for job in jobs]})
     except Exception as e:
@@ -106,6 +269,7 @@ def get_jobs():
 
 
 @app.route("/api/jobs", methods=["POST"])
+@auth_manager.require_login
 def add_job():
     """Add a new job application"""
     try:
@@ -136,6 +300,7 @@ def add_job():
                 400,
             )
 
+        user_id = auth_manager.get_current_user_id()
         success, message, job_id = job_service.add_job(
             role=role,
             company_name=company_name,
@@ -145,6 +310,7 @@ def add_job():
             resume_sent=resume_sent,
             status=status,
             applied_date_str=applied_date_str,
+            user_id=user_id,
         )
 
         if success:
@@ -156,10 +322,12 @@ def add_job():
 
 
 @app.route("/api/jobs/<int:job_id>", methods=["GET"])
+@auth_manager.require_login
 def get_job_details(job_id):
     """Get detailed information for a specific job"""
     try:
-        job = job_service.get_job_by_id(job_id)
+        user_id = auth_manager.get_current_user_id()
+        job = job_service.get_job_by_id(job_id, user_id)
         if job:
             return jsonify({"success": True, "data": job.to_dict()})
         else:
@@ -169,6 +337,7 @@ def get_job_details(job_id):
 
 
 @app.route("/api/jobs/<int:job_id>/status", methods=["PUT"])
+@auth_manager.require_login
 def update_job_status(job_id):
     """Update job application status"""
     try:
@@ -197,6 +366,7 @@ def update_job_status(job_id):
 
 
 @app.route("/api/jobs/<int:job_id>", methods=["DELETE"])
+@auth_manager.require_login
 def delete_job(job_id):
     """Delete a job application"""
     try:
@@ -211,6 +381,7 @@ def delete_job(job_id):
 
 
 @app.route("/api/jobs/search", methods=["GET"])
+@auth_manager.require_login
 def search_jobs():
     """Search jobs by company name, role, or source"""
     try:
@@ -225,6 +396,7 @@ def search_jobs():
 
 
 @app.route("/api/jobs/filter", methods=["GET"])
+@auth_manager.require_login
 def filter_jobs_by_status():
     """Filter jobs by status"""
     try:
@@ -247,6 +419,7 @@ def filter_jobs_by_status():
 
 
 @app.route("/api/statistics", methods=["GET"])
+@auth_manager.require_login
 def get_statistics():
     """Get job application statistics"""
     try:
@@ -257,6 +430,7 @@ def get_statistics():
 
 
 @app.route("/api/job-statuses", methods=["GET"])
+@auth_manager.require_login
 def get_job_statuses():
     """Get all available job statuses"""
     try:
@@ -264,6 +438,31 @@ def get_job_statuses():
         return jsonify({"success": True, "data": statuses})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+def check_database():
+    """Check if database is properly set up"""
+    try:
+        from job_tracker.database import DatabaseConnection
+
+        db = DatabaseConnection()
+
+        # Check if users table exists
+        result = db.execute_single_query(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='users'"
+        )
+
+        if not result:
+            print("⚠️  Users table not found. Please run: python migrate_db.py")
+            return False
+
+        print("✅ Database tables found")
+        return True
+
+    except Exception as e:
+        print(f"❌ Database check failed: {e}")
+        print("💡 Try running: python migrate_db.py")
+        return False
 
 
 if __name__ == "__main__":
@@ -275,9 +474,23 @@ if __name__ == "__main__":
     os.makedirs(static_dir, exist_ok=True)
     os.makedirs(os.path.join(static_dir, "css"), exist_ok=True)
     os.makedirs(os.path.join(static_dir, "js"), exist_ok=True)
+    
+    migrate_database()
 
     print("🚀 Starting Job Application Tracker Web Server...")
+
+    # Check database setup
+    if not check_database():
+        print("❌ Database setup incomplete. Exiting...")
+        exit(1)
+
     print("📊 Dashboard available at: http://localhost:5050")
     print("🔧 API documentation at: http://localhost:5050/api")
+    print("💡 Press Ctrl+C to stop the server")
 
-    app.run(debug=True, host="0.0.0.0", port=5050)
+    try:
+        app.run(debug=True, host="0.0.0.0", port=5050)
+    except KeyboardInterrupt:
+        print("\n👋 Server stopped by user")
+    except Exception as e:
+        print(f"❌ Server error: {e}")

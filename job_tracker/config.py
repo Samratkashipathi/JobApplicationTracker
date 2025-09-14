@@ -18,6 +18,7 @@ APP_VERSION = "1.0.0"
 TABLE_FORMAT = "grid"
 MAX_DISPLAY_LENGTH = 30
 
+
 # Colors (for terminal output)
 class Colors:
     SUCCESS = "\033[92m"
@@ -26,6 +27,7 @@ class Colors:
     INFO = "\033[94m"
     HEADER = "\033[96m"
     RESET = "\033[0m"
+
 
 # Job Status Options
 JOB_STATUSES = [
